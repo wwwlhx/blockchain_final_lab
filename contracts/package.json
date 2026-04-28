@@ -1,0 +1,31 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "数字资产确权系统原型的链上与 CLI 核心逻辑",
+  "main": "index.js",
+  "scripts": {
+    "build:ts": "tsc --pretty false",
+    "compile": "hardhat compile",
+    "node": "hardhat node",
+    "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
+    "register:file": "npm run build:ts --silent && node dist/scripts/register_file.js",
+    "query:asset": "npm run build:ts --silent && node dist/scripts/query_asset.js",
+    "history:asset": "npm run build:ts --silent && node dist/scripts/history_asset.js",
+    "verify:file": "npm run build:ts --silent && node dist/scripts/verify_file.js",
+    "verify:asset": "npm run build:ts --silent && node dist/scripts/verify_asset.js",
+    "transfer:asset": "npm run build:ts --silent && node dist/scripts/transfer_asset.js",
+    "revoke:asset": "npm run build:ts --silent && node dist/scripts/revoke_asset.js",
+    "test": "npm run build:ts --silent && node dist/scripts/run_tests.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.8",
+    "@types/node": "^22.19.17",
+    "ethers": "^6.16.0",
+    "hardhat": "^3.4.0",
+    "typescript": "~5.8.0"
+  }
+}

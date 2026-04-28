@@ -1,0 +1,2 @@
+This is a sample digital asset file for the ownership prototype demo.
+You can register this file on-chain and then verify its integrity later.
