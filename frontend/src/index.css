@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #e2e8f0;
+  background: linear-gradient(135deg, #1a1b26 0%, #16161e 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(122, 162, 247, 0.3);
+  color: #e2e8f0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b4261;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7aa2f7;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(36, 40, 59, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(122, 162, 247, 0.08);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #7aa2f7 0%, #bb9af7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 
+         text-white font-medium rounded-xl
+         hover:from-blue-600 hover:to-purple-700 
+         transition-all duration-200 ease-out
+         shadow-lg hover:shadow-blue-500/25
+         active:scale-[0.97]
+         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100;
+}
+
+.btn-secondary {
+  @apply px-5 py-2.5 bg-blockchain-card border border-white/10
+         text-white font-medium rounded-xl
+         hover:border-blockchain-accent/50 hover:bg-blockchain-accent/10
+         transition-all duration-200 ease-out
+         active:scale-[0.97]
+         disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+}
+
+/* Card styles */
+.card {
+  @apply bg-blockchain-card/80 backdrop-blur-xl rounded-2xl 
+         border border-white/[0.04] shadow-xl
+         transition-all duration-300;
+}
+
+.card:hover {
+  @apply border-white/[0.08];
+}
+
+/* Input styles */
+.input {
+  @apply w-full px-4 py-2.5 bg-blockchain-dark/60 
+         border border-white/10 rounded-xl
+         text-white placeholder-gray-500
+         focus:outline-none focus:border-blockchain-accent/60 focus:ring-1 focus:ring-blockchain-accent/30
+         transition-all duration-200
+         disabled:opacity-40 disabled:cursor-not-allowed;
+}
+
+select.input {
+  @apply cursor-pointer appearance-none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 2.5rem;
+}
+
+select.input option {
+  background: #24283b;
+  color: #e2e8f0;
+}
+
+textarea.input {
+  @apply resize-none;
+}
+
+/* Status badges */
+.badge-active {
+  @apply px-2.5 py-0.5 bg-green-500/15 text-green-400 rounded-full text-xs font-medium border border-green-500/20;
+}
+
+.badge-revoked {
+  @apply px-2.5 py-0.5 bg-red-500/15 text-red-400 rounded-full text-xs font-medium border border-red-500/20;
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: animateIn 0.4s ease-out forwards;
+}
+
+@keyframes animateIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Blockchain grid background */
+.blockchain-grid {
+  background-image: 
+    linear-gradient(rgba(122, 162, 247, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 162, 247, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Hash display */
+.hash-display {
+  @apply font-mono text-sm bg-blockchain-dark/50 px-3 py-2 rounded-lg
+         border border-white/5 break-all;
+}
+
+/* Number input spinner removal */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-blockchain-accent/40 ring-offset-2 ring-offset-blockchain-dark;
+}
+
+/* Smooth transitions for all interactive elements */
+a, button {
+  @apply transition-colors duration-200;
+}
