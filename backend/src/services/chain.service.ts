@@ -4,11 +4,17 @@ export async function getHealthStatus() {
   const { provider, signers } = await getContract();
   const cfg = await loadDeploymentConfig();
   const address = await signers[0].getAddress();
-  const balance = await provider.getBalance(address);
+  const [balance, blockNumber, network] = await Promise.all([
+    provider.getBalance(address),
+    provider.getBlockNumber(),
+    provider.getNetwork(),
+  ]);
 
   return {
     connected: true,
     network: cfg.network,
+    chainId: Number(network.chainId),
+    blockNumber,
     contractAddress: cfg.contractAddress,
     defaultAccount: address,
     balance: `${(Number(balance) / 1e18).toFixed(2)} ETH`,

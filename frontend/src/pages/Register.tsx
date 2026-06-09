@@ -5,7 +5,17 @@ import {
   Upload, FileCheck, Hash, Database, CheckCircle2, 
   Loader2, AlertCircle, ArrowRight, Sparkles
 } from 'lucide-react'
-import { uploadFile, registerAsset } from '../lib/api'
+import {
+  uploadFile,
+  registerAsset,
+  prepareWalletRegistration,
+  confirmWalletRegistration,
+  getTransactionDetails,
+} from '../lib/api'
+import CopyButton from '../components/CopyButton'
+import { PageHeader } from '../components/PageUI'
+import TransactionPanel from '../components/TransactionPanel'
+import { useWallet } from '../contexts/WalletContext'
 import toast from 'react-hot-toast'
 
 type Step = 'upload' | 'metadata' | 'confirm' | 'processing' | 'success'
@@ -22,6 +32,7 @@ interface FileInfo {
 
 export default function Register() {
   const navigate = useNavigate()
+  const wallet = useWallet()
   const [step, setStep] = useState<Step>('upload')
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null)
   const [formData, setFormData] = useState({
@@ -86,6 +97,38 @@ export default function Register() {
     setError('')
     
     try {
+      if (wallet.connected && wallet.isCorrectNetwork && wallet.contract && wallet.address) {
+        const preparedRes = await prepareWalletRegistration({
+          filePath: fileInfo.filePath,
+          assetName: formData.assetName,
+          description: formData.description,
+          rightsType: formData.rightsType,
+          assetCategory: formData.assetCategory,
+          claimantAddress: wallet.address,
+        })
+        const prepared = preparedRes.data.data
+        toast.loading('请在 MetaMask 中确认登记交易', { id: 'wallet-register' })
+        const tx = await wallet.contract.registerAsset(
+          prepared.fileHash,
+          prepared.metadataHash,
+          prepared.metadataURI,
+          prepared.rightsType,
+        )
+        toast.loading('交易已提交，正在等待区块确认', { id: 'wallet-register' })
+        await tx.wait()
+        const confirmed = await confirmWalletRegistration({
+          transactionHash: tx.hash,
+          assetName: formData.assetName,
+          description: formData.description,
+          assetCategory: formData.assetCategory,
+        })
+        const details = await getTransactionDetails(tx.hash)
+        setResult({ ...confirmed.data.data, transactionDetails: details.data.data, signingMode: 'wallet' })
+        setStep('success')
+        toast.success('钱包签名登记成功', { id: 'wallet-register' })
+        return
+      }
+
       const res = await registerAsset({
         filePath: fileInfo.filePath,
         assetName: formData.assetName,
@@ -95,7 +138,8 @@ export default function Register() {
       })
       
       if (res.data.success) {
-        setResult(res.data.data)
+        const details = await getTransactionDetails(res.data.data.transactionHash)
+        setResult({ ...res.data.data, transactionDetails: details.data.data, signingMode: 'managed' })
         setStep('success')
         toast.success('资产已成功登记到区块链！')
       } else {
@@ -104,6 +148,7 @@ export default function Register() {
         toast.error(res.data.error || '登记失败')
       }
     } catch (err: any) {
+      toast.dismiss('wallet-register')
       setError(err.response?.data?.error || err.message || '登记失败')
       setStep('confirm')
       toast.error(err.response?.data?.error || '登记失败')
@@ -122,21 +167,24 @@ export default function Register() {
   ]
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold gradient-text">资产登记</h1>
-        <p className="text-gray-400 mt-1">将您的数字资产登记到区块链</p>
+        <PageHeader
+          eyebrow="Asset registration"
+          title="创建可信资产凭证"
+          description="上传文件、完善权利声明，并将文件指纹与声明指纹写入智能合约。"
+        />
       </div>
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="grid grid-cols-4 gap-2 mb-8">
         {['上传文件', '填写信息', '确认登记', '完成'].map((label, index) => {
           const stepIndex = ['upload', 'metadata', 'confirm', 'success'].indexOf(step)
           const isActive = index <= stepIndex
           const isCurrent = index === stepIndex
           
           return (
-            <div key={label} className="flex items-center">
+            <div key={label} className="relative flex flex-col items-center text-center">
               <motion.div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
                   isActive 
@@ -148,11 +196,11 @@ export default function Register() {
               >
                 {index + 1}
               </motion.div>
-              <span className={`ml-2 text-sm ${isActive ? 'text-white' : 'text-gray-500'}`}>
+              <span className={`mt-2 text-xs sm:text-sm ${isActive ? 'text-white' : 'text-gray-500'}`}>
                 {label}
               </span>
               {index < 3 && (
-                <div className={`w-12 h-0.5 mx-4 ${isActive ? 'bg-blockchain-accent' : 'bg-blockchain-card'}`} />
+                <div className={`absolute left-[calc(50%+24px)] top-5 h-0.5 w-[calc(100%-48px)] ${isActive ? 'bg-blockchain-accent' : 'bg-blockchain-card'}`} />
               )}
             </div>
           )
@@ -335,6 +383,21 @@ export default function Register() {
               确认登记信息
             </h3>
 
+            <div className={`mb-6 rounded-xl border p-4 ${
+              wallet.connected && wallet.isCorrectNetwork
+                ? 'border-green-500/20 bg-green-500/[0.05]'
+                : 'border-yellow-500/20 bg-yellow-500/[0.05]'
+            }`}>
+              <p className={`text-sm font-medium ${wallet.connected && wallet.isCorrectNetwork ? 'text-green-400' : 'text-yellow-400'}`}>
+                {wallet.connected && wallet.isCorrectNetwork ? 'MetaMask 用户签名模式' : '后端测试账户托管模式'}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                {wallet.connected && wallet.isCorrectNetwork
+                  ? `本次交易将由当前钱包 ${wallet.address} 直接签署。`
+                  : '连接 MetaMask 并切换至 Hardhat 网络后，可由用户钱包直接签署交易。'}
+              </p>
+            </div>
+
             <div className="space-y-4">
               {[
                 { label: '文件名称', value: fileInfo.fileName },
@@ -429,22 +492,45 @@ export default function Register() {
               <p className="text-gray-400 mt-1">您的数字资产已成功写入区块链</p>
             </div>
 
-            <div className="bg-blockchain-dark/50 rounded-xl p-6 space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-400">资产 ID</span>
-                <span className="text-2xl font-bold text-blockchain-accent">#{result.assetId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">区块号</span>
-                <span className="font-mono">{result.blockNumber}</span>
-              </div>
-              <div>
-                <span className="text-gray-400 text-sm">交易哈希</span>
-                <p className="font-mono text-sm mt-1 break-all text-blockchain-accent">{result.transactionHash}</p>
-              </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { label: '资产 ID', value: `#${result.assetId}`, accent: true },
+                { label: '确认区块', value: `#${result.blockNumber}` },
+                { label: '权利类型', value: result.rightsType },
+              ].map(item => (
+                <div key={item.label} className="rounded-2xl border border-white/5 bg-blockchain-dark/50 p-4 text-center">
+                  <p className="text-xs text-gray-500">{item.label}</p>
+                  <p className={`mt-2 font-mono text-lg font-bold ${item.accent ? 'text-blockchain-accent' : 'text-white'}`}>{item.value}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="flex gap-4 mt-8">
+            <div className="mt-4 space-y-3 rounded-2xl border border-white/5 bg-blockchain-dark/50 p-5">
+              {[
+                { label: '文件指纹 fileHash', value: result.fileHash },
+                { label: '声明指纹 metadataHash', value: result.metadataHash },
+                { label: '交易凭证 transactionHash', value: result.transactionHash },
+              ].map(item => (
+                <div key={item.label} className="rounded-xl bg-black/20 p-3">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-gray-500">{item.label}</span>
+                    <CopyButton text={item.value} label="已复制" />
+                  </div>
+                  <p className="break-all font-mono text-xs text-blockchain-accent/90">{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {result.transactionDetails && (
+              <div className="mt-4">
+                <TransactionPanel
+                  transaction={result.transactionDetails}
+                  title={result.signingMode === 'wallet' ? 'MetaMask 签名交易已确认' : '托管账户交易已确认'}
+                />
+              </div>
+            )}
+
+            <div className="grid gap-3 mt-8 sm:grid-cols-3">
               <button
                 className="btn-secondary flex-1"
                 onClick={() => {
@@ -461,6 +547,12 @@ export default function Register() {
                 onClick={() => navigate(`/query/${result.assetId}`)}
               >
                 查看资产详情
+              </button>
+              <button
+                className="btn-secondary flex-1"
+                onClick={() => navigate(`/certificate/${result.assetId}`)}
+              >
+                查看登记证书
               </button>
             </div>
           </motion.div>

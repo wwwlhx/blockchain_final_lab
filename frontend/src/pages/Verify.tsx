@@ -5,6 +5,7 @@ import { Shield, CheckCircle2, XCircle, Loader2, AlertCircle, Upload, FileCheck 
 import { verifyAsset, uploadFile, VerifyResult } from '../lib/api'
 import CopyButton from '../components/CopyButton'
 import toast from 'react-hot-toast'
+import { PageHeader } from '../components/PageUI'
 
 export default function Verify() {
   const { id } = useParams()
@@ -72,11 +73,12 @@ export default function Verify() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold gradient-text">资产校验</h1>
-        <p className="text-gray-400 mt-1">验证文件完整性与链上记录一致性</p>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <PageHeader
+        eyebrow="Integrity verification"
+        title="验证数字证据完整性"
+        description="重新计算本地文件哈希，并与链上文件指纹和声明指纹进行可信比对。"
+      />
 
       <div className="card p-8">
         <div className="space-y-6">
@@ -146,7 +148,12 @@ export default function Verify() {
         <AnimatePresence>
           {result && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-8">
-              <div className={`p-6 rounded-2xl border ${result.overallResult ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+              <div className={`relative overflow-hidden p-6 sm:p-8 rounded-2xl border ${
+                result.overallResult
+                  ? 'bg-gradient-to-br from-green-500/10 to-emerald-500/[0.02] border-green-500/25'
+                  : 'bg-gradient-to-br from-red-500/10 to-orange-500/[0.02] border-red-500/25'
+              }`}>
+                <div className={`absolute inset-x-0 top-0 h-1 ${result.overallResult ? 'bg-gradient-to-r from-green-400 to-cyan-400' : 'bg-gradient-to-r from-red-400 to-orange-400'}`} />
                 <div className="flex items-center gap-4 mb-5">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -159,7 +166,10 @@ export default function Verify() {
                     }
                   </motion.div>
                   <div>
-                    <h3 className="text-xl font-bold">{result.overallResult ? '校验通过' : '校验失败'}</h3>
+                    <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${result.overallResult ? 'text-green-400' : 'text-red-400'}`}>
+                      Verification result
+                    </p>
+                    <h3 className="mt-1 text-2xl font-bold">{result.overallResult ? '证据链校验通过' : '检测到内容不一致'}</h3>
                     <p className="text-sm text-gray-400">{result.overallResult ? '文件和声明均未被篡改' : '文件或声明已被修改，与链上记录不一致'}</p>
                   </div>
                 </div>

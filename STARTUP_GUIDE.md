@@ -48,6 +48,10 @@ npm run dev
 
 打开浏览器访问: **http://localhost:5173**
 
+后端健康检查: **http://localhost:3001/api/health**
+
+> 每次重新启动 Hardhat 本地链后都需要重新部署合约。后端检测到新的部署身份时，会自动重置上一轮演示的 SQLite 链下索引。
+
 ## 功能页面
 
 | 页面 | 路径 | 功能 |
@@ -81,7 +85,7 @@ npm run dev
 - 显示校验结果（通过/失败）
 
 ### 4. 篡改演示（亮点）
-- 修改文件内容（哪怕一个字符）
+- 直接上传 `demo_files/tampered_asset.txt`
 - 重新校验
 - 显示"校验失败" → 证明防篡改能力
 
@@ -102,6 +106,8 @@ npm run dev
 cd contracts
 npm run build:ts  # 先编译 contracts 的 TypeScript
 ```
+
+当前后端已通过 ethers.js + ABI 直接连接节点，可以在 `backend/` 目录独立启动，不再依赖 Hardhat 运行目录。
 
 ### Q: 前端显示 "加载失败"
 确保：

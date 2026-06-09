@@ -1,10 +1,11 @@
 import multer from "multer";
 import { config } from "../config/index.js";
+import { sanitizeStoredFileName } from "../utils/filename.js";
 
 const storage = multer.diskStorage({
   destination: config.uploadDir,
   filename: (_req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${file.originalname}`;
+    const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeStoredFileName(file.originalname)}`;
     cb(null, uniqueName);
   },
 });

@@ -124,7 +124,7 @@ export function insertTransaction(data: {
 }) {
   const db = getDb();
   db.prepare(`
-    INSERT INTO transactions 
+    INSERT OR IGNORE INTO transactions
     (asset_id, type, from_address, to_address, operator, tx_hash, block_number, block_timestamp)
     VALUES (@asset_id, @type, @from_address, @to_address, @operator, @tx_hash, @block_number, @block_timestamp)
   `).run({
@@ -143,6 +143,12 @@ export function getTransactionsByAsset(assetId: number) {
   return getDb()
     .prepare("SELECT * FROM transactions WHERE asset_id = ? ORDER BY block_number ASC")
     .all(assetId);
+}
+
+export function getTransactionByHash(txHash: string) {
+  return getDb()
+    .prepare("SELECT * FROM transactions WHERE tx_hash = ?")
+    .get(txHash);
 }
 
 // ══════════════════════════════════════
@@ -185,6 +191,54 @@ export function insertLog(level: string, action: string, message?: string, detai
 }
 
 // ══════════════════════════════════════
+// 本地链部署一致性
+// ══════════════════════════════════════
+
+export function reconcileDeployment(deploymentKey: string): boolean {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT value FROM system_state WHERE key = 'deployment_key'")
+    .get() as { value: string } | undefined;
+
+  if (row?.value === deploymentKey) return false;
+
+  const reconcile = db.transaction(() => {
+    // 子表必须先删除，以满足外键约束。
+    db.prepare("DELETE FROM verification_records").run();
+    db.prepare("DELETE FROM transactions").run();
+    db.prepare("DELETE FROM metadata").run();
+    db.prepare("DELETE FROM assets").run();
+    db.prepare("DELETE FROM system_logs").run();
+    db.prepare(`
+      INSERT INTO system_state (key, value, updated_at)
+      VALUES ('deployment_key', ?, datetime('now', 'localtime'))
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = excluded.updated_at
+    `).run(deploymentKey);
+    db.prepare(`
+      INSERT INTO system_logs (level, action, message, details)
+      VALUES ('info', 'CHAIN_SYNC', '检测到新的合约部署，已重置链下索引', ?)
+    `).run(JSON.stringify({ deploymentKey }));
+  });
+
+  reconcile();
+  return true;
+}
+
+export function clearIndexedData(): void {
+  const db = getDb();
+  const clear = db.transaction(() => {
+    db.prepare("DELETE FROM verification_records").run();
+    db.prepare("DELETE FROM transactions").run();
+    db.prepare("DELETE FROM metadata").run();
+    db.prepare("DELETE FROM assets").run();
+    db.prepare("DELETE FROM system_logs").run();
+  });
+  clear();
+}
+
+// ══════════════════════════════════════
 // 统计查询
 // ══════════════════════════════════════
 
@@ -197,6 +251,25 @@ export function getStats() {
   const totalVerifications = (db.prepare("SELECT COUNT(*) as cnt FROM verification_records").get() as any).cnt;
   const passedVerifications = (db.prepare("SELECT COUNT(*) as cnt FROM verification_records WHERE overall_result = 1").get() as any).cnt;
   const recentLogs = db.prepare("SELECT * FROM system_logs ORDER BY id DESC LIMIT 10").all();
+  const categoryDistribution = db.prepare(`
+    SELECT COALESCE(asset_category, 'other') AS name, COUNT(*) AS value
+    FROM assets
+    GROUP BY COALESCE(asset_category, 'other')
+    ORDER BY value DESC
+  `).all();
+  const transactionDistribution = db.prepare(`
+    SELECT type AS name, COUNT(*) AS value
+    FROM transactions
+    GROUP BY type
+    ORDER BY value DESC
+  `).all();
+  const dailyRegistrations = db.prepare(`
+    SELECT substr(created_at, 1, 10) AS date, COUNT(*) AS value
+    FROM assets
+    GROUP BY substr(created_at, 1, 10)
+    ORDER BY date ASC
+    LIMIT 14
+  `).all();
 
   return {
     totalAssets,
@@ -206,5 +279,8 @@ export function getStats() {
     totalVerifications,
     passedVerifications,
     recentLogs,
+    categoryDistribution,
+    transactionDistribution,
+    dailyRegistrations,
   };
 }

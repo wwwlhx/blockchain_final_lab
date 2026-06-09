@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.10.0",

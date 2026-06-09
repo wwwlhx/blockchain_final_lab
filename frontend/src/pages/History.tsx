@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Clock, FileCheck, ArrowRight, XCircle, Loader2, AlertCircle, ChevronLeft } from 'lucide-react'
+import { Clock, FileCheck, ArrowRight, XCircle, ChevronLeft, Activity, Blocks, ShieldCheck } from 'lucide-react'
 import { getAssetHistory, HistoryEvent } from '../lib/api'
 import CopyButton from '../components/CopyButton'
 import { truncateAddress } from '../lib/utils'
+import { EmptyPanel, ErrorPanel, LoadingPanel, PageHeader } from '../components/PageUI'
 
 export default function History() {
   const { id } = useParams()
@@ -61,38 +62,44 @@ export default function History() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">资产历史</h1>
-          <p className="text-gray-400 mt-1">资产 #{id} 的生命周期记录</p>
-        </div>
-        <Link to={`/query/${id}`} className="btn-secondary flex items-center gap-2 text-sm">
+    <div className="max-w-5xl mx-auto space-y-8">
+      <PageHeader
+        eyebrow="Immutable timeline"
+        title="资产生命周期"
+        description={`资产 #${id} 从登记、流转到撤销的链上事件证据。`}
+        action={<Link to={`/query/${id}`} className="btn-secondary flex items-center gap-2 text-sm">
           <ChevronLeft className="w-4 h-4" /> 返回详情
-        </Link>
-      </div>
+        </Link>}
+      />
 
-      {loading && (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blockchain-accent" />
-        </div>
-      )}
+      {loading && <LoadingPanel label="正在回放链上事件..." />}
 
-      {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />{error}
-        </div>
-      )}
+      {error && <ErrorPanel message={error} />}
 
       {!loading && !error && history.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>暂无历史记录</p>
-        </div>
+        <EmptyPanel title="暂无链上事件" description="该资产还没有可回放的生命周期记录。" />
       )}
 
       {!loading && history.length > 0 && (
-        <div className="card p-8">
+        <>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {[
+            { label: '事件总数', value: history.length, icon: Activity, color: 'text-blue-400' },
+            { label: '最新区块', value: `#${history[history.length - 1].blockNumber}`, icon: Blocks, color: 'text-purple-400' },
+            { label: '当前状态', value: history.some(item => item.type === 'REVOKED') ? 'Revoked' : 'Active', icon: ShieldCheck, color: history.some(item => item.type === 'REVOKED') ? 'text-red-400' : 'text-green-400' },
+          ].map(item => (
+            <div key={item.label} className="card flex items-center gap-4 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.04]">
+                <item.icon className={`h-5 w-5 ${item.color}`} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{item.label}</p>
+                <p className="mt-1 font-mono text-lg font-bold">{item.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="card p-5 sm:p-8">
           <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
             <Clock className="w-4 h-4" />
             <span>共 {history.length} 条事件记录</span>
@@ -171,6 +178,7 @@ export default function History() {
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   )

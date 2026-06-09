@@ -58,6 +58,19 @@ export interface VerifyResult {
   message: string
 }
 
+export interface TransactionDetails {
+  transactionHash: string
+  status: number
+  blockNumber: number
+  from: string
+  to: string | null
+  gasUsed: string
+  gasPrice: string | null
+  fee: string | null
+  timestamp: number | null
+  timestampFormatted: string | null
+}
+
 // API functions
 export const getDeployment = () => api.get('/deployment')
 
@@ -81,6 +94,33 @@ export const registerAsset = (data: {
   assetCategory?: string
 }) => api.post('/assets/register', data)
 
+export const prepareWalletRegistration = (data: {
+  filePath: string
+  assetName: string
+  description?: string
+  rightsType?: string
+  assetCategory?: string
+  claimantAddress: string
+}) => api.post('/wallet/register/prepare', data)
+
+export const confirmWalletRegistration = (data: {
+  transactionHash: string
+  assetName: string
+  description?: string
+  assetCategory?: string
+}) => api.post('/wallet/register/confirm', data)
+
+export const confirmWalletAction = (data: {
+  transactionHash: string
+  expectedType: 'TRANSFERRED' | 'REVOKED'
+}) => api.post<{ success: boolean; data: TransactionDetails }>('/wallet/action/confirm', data)
+
+export const getTransactionDetails = (hash: string) =>
+  api.get<{ success: boolean; data: TransactionDetails }>(`/transactions/${hash}`)
+
+export const syncChainIndex = () =>
+  api.post<{ success: boolean; data: { assets: number; transfers: number; revocations: number; blockNumber: number } }>('/sync')
+
 export const verifyAsset = (id: number, filePath: string, metadataPath?: string) =>
   api.post<{ success: boolean; data: VerifyResult }>(`/assets/${id}/verify`, { filePath, metadataPath })
 
@@ -103,13 +143,16 @@ export interface SystemStats {
   totalTransactions: number
   totalVerifications: number
   passedVerifications: number
-  recentLogs: { id: number; level: string; module: string; message: string; created_at: string }[]
+  recentLogs: { id: number; level: string; action: string; message: string; created_at: string }[]
+  categoryDistribution: { name: string; value: number }[]
+  transactionDistribution: { name: string; value: number }[]
+  dailyRegistrations: { date: string; value: number }[]
 }
 
 export const getStats = () =>
   api.get<{ success: boolean; data: SystemStats }>('/stats')
 
 export const getHealth = () =>
-  api.get<{ status: string; chain: { connected: boolean; network: string; contractAddress: string; defaultAccount: string; balance: string } }>('/health')
+  api.get<{ status: string; chain: { connected: boolean; network: string; chainId: number; blockNumber: number; contractAddress: string; defaultAccount: string; balance: string } }>('/health')
 
 export default api

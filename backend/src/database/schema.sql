@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at      TEXT    DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_tx_hash ON transactions(tx_hash);
+
 -- 校验记录表：每次文件校验的日志
 CREATE TABLE IF NOT EXISTS verification_records (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,6 +71,14 @@ CREATE TABLE IF NOT EXISTS system_logs (
   message         TEXT,
   details         TEXT,                         -- JSON 补充信息
   created_at      TEXT    DEFAULT (datetime('now', 'localtime'))
+);
+
+-- 系统状态表：记录当前链和合约部署身份。
+-- Hardhat 本地链重新部署后，用它识别并清理上一轮演示留下的链下索引。
+CREATE TABLE IF NOT EXISTS system_state (
+  key             TEXT PRIMARY KEY,
+  value           TEXT NOT NULL,
+  updated_at      TEXT DEFAULT (datetime('now', 'localtime'))
 );
 
 -- 索引

@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
 import { 
   Database, Server, Globe, FileCode, Shield, 
-  ArrowDown, ArrowRight, Layers, HardDrive, Cpu, Monitor
+  ArrowDown, ArrowRight, Layers, HardDrive, Cpu, Monitor, Sparkles, CheckCircle2
 } from 'lucide-react'
+import { PageHeader, SectionTitle } from '../components/PageUI'
 
 const techStack = [
   { name: 'Solidity', desc: '智能合约', color: 'text-purple-400' },
@@ -51,11 +52,31 @@ const dataFlow = [
 export default function Architecture() {
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold gradient-text">系统架构</h1>
-        <p className="text-gray-400 mt-1">三层结构化确权模型 · 技术实现说明</p>
-      </div>
+      <PageHeader
+        eyebrow="System blueprint"
+        title="可信资产平台架构"
+        description="前端负责交互展示，后端处理文件和链下索引，智能合约保存不可篡改的核心确权记录。"
+      />
+
+      <motion.div
+        className="hero-surface relative overflow-hidden rounded-3xl border border-white/[0.08] p-6 sm:p-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <Sparkles className="absolute right-8 top-8 h-20 w-20 text-blockchain-accent/[0.06]" />
+        <div className="relative grid gap-5 md:grid-cols-3">
+          {[
+            { value: '3', label: '层结构化确权模型' },
+            { value: '6', label: '步可信数据流程' },
+            { value: '8', label: '项核心技术能力' },
+          ].map(item => (
+            <div key={item.label} className="rounded-2xl border border-white/[0.07] bg-black/15 p-5">
+              <p className="text-3xl font-bold gradient-text">{item.value}</p>
+              <p className="mt-2 text-sm text-gray-400">{item.label}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Architecture Layers */}
       <motion.div
@@ -63,7 +84,7 @@ export default function Architecture() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-lg font-semibold mb-6">分层架构</h2>
+        <SectionTitle title="分层架构" description="职责清晰的前端、服务和区块链三层系统" />
         <div className="space-y-4">
           {layers.map((layer, i) => (
             <motion.div
@@ -106,7 +127,7 @@ export default function Architecture() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="text-lg font-semibold mb-6">数据流转过程</h2>
+        <SectionTitle title="数据流转过程" description="从本地文件到链上证据的完整生成路径" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {dataFlow.map((item, i) => (
             <motion.div
@@ -136,7 +157,7 @@ export default function Architecture() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <h2 className="text-lg font-semibold mb-4">技术栈</h2>
+        <SectionTitle title="技术栈" description="围绕可运行、可测试、可展示选择的工程组件" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {techStack.map((tech, i) => (
             <motion.div
@@ -164,7 +185,7 @@ export default function Architecture() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <h2 className="text-lg font-semibold mb-4">安全模型</h2>
+        <SectionTitle title="安全模型" description="系统能够提供的三类技术保障" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { title: '文件完整性', desc: '任何 1 bit 修改都会导致 SHA-256 哈希完全不同，确保文件内容不可伪造', color: 'text-blue-400' },
@@ -178,7 +199,7 @@ export default function Architecture() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 + i * 0.1 }}
             >
-              <h3 className={`font-semibold text-sm ${item.color} mb-2`}>{item.title}</h3>
+              <h3 className={`flex items-center gap-2 font-semibold text-sm ${item.color} mb-2`}><CheckCircle2 className="h-4 w-4" />{item.title}</h3>
               <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
             </motion.div>
           ))}

@@ -23,6 +23,8 @@ interface LayoutProps {
 interface ChainStatus {
   connected: boolean
   network?: string
+  chainId?: number
+  blockNumber?: number
   contractAddress?: string
   defaultAccount?: string
   balance?: string
@@ -61,7 +63,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen blockchain-grid">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 glass border-r border-white/5 z-50 flex flex-col">
+      <aside className="fixed left-0 top-0 h-full w-64 glass border-r border-white/5 z-50 hidden lg:flex flex-col">
         <div className="p-5 flex-1">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 mb-8 group">
@@ -105,7 +107,8 @@ export default function Layout({ children }: LayoutProps) {
                     )}
                     <Icon className="w-[18px] h-[18px]" />
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium">{item.label}</span>
+                      <span className="block text-sm font-medium">{item.label}</span>
+                      <span className="block text-[10px] text-gray-600 group-hover:text-gray-500">{item.desc}</span>
                     </div>
                     {isActive && (
                       <motion.div
@@ -151,19 +154,28 @@ export default function Layout({ children }: LayoutProps) {
             )}
           </div>
           <div className="text-[10px] text-gray-600 flex items-center justify-between">
-            <span>三层结构化确权模型</span>
+            <span>{chainStatus.blockNumber != null ? `区块高度 #${chainStatus.blockNumber}` : '三层结构化确权模型'}</span>
             <span className="text-blockchain-accent font-medium">v1.0</span>
           </div>
         </div>
       </aside>
       
       {/* Main content */}
-      <main className="ml-64 min-h-screen">
+      <main className="min-h-screen pb-20 lg:ml-64 lg:pb-0">
         {/* Top bar with wallet */}
-        <div className="sticky top-0 z-40 glass border-b border-white/5 px-8 py-3 flex justify-end">
+        <div className="sticky top-0 z-40 glass border-b border-white/5 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between lg:justify-end">
+          <Link to="/" className="flex items-center gap-2 lg:hidden">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Blocks className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold leading-none">数字资产确权</p>
+              <p className="text-[9px] text-gray-500 mt-1">TRUSTED REGISTRY</p>
+            </div>
+          </Link>
           <WalletButton />
         </div>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -177,6 +189,26 @@ export default function Layout({ children }: LayoutProps) {
           </AnimatePresence>
         </div>
       </main>
+
+      <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-6 rounded-2xl border border-white/10 bg-[#1b1e2c]/95 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path ||
+            (item.path !== '/' && location.pathname.startsWith(item.path))
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[9px] ${
+                isActive ? 'bg-blockchain-accent/15 text-blockchain-accent' : 'text-gray-500'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="truncate">{item.label.replace('资产', '')}</span>
+            </Link>
+          )
+        })}
+      </nav>
     </div>
   )
 }

@@ -33,4 +33,8 @@ contracts/typechain-types/
 
 # Logs
 *.log
+.runlogs/
 npm-debug.log*
+
+# Local screenshots
+image*.png

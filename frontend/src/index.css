@@ -7,7 +7,10 @@
   line-height: 1.5;
   font-weight: 400;
   color: #e2e8f0;
-  background: linear-gradient(135deg, #1a1b26 0%, #16161e 100%);
+  background:
+    radial-gradient(circle at 78% 8%, rgba(122, 162, 247, 0.12), transparent 26%),
+    radial-gradient(circle at 18% 86%, rgba(187, 154, 247, 0.08), transparent 24%),
+    linear-gradient(135deg, #171925 0%, #11131c 100%);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -49,8 +52,8 @@ body {
 
 /* Glass effect */
 .glass {
-  background: rgba(36, 40, 59, 0.85);
-  backdrop-filter: blur(16px);
+  background: rgba(27, 30, 44, 0.82);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(122, 162, 247, 0.08);
 }
 
@@ -84,8 +87,8 @@ body {
 
 /* Card styles */
 .card {
-  @apply bg-blockchain-card/80 backdrop-blur-xl rounded-2xl 
-         border border-white/[0.04] shadow-xl
+  @apply bg-blockchain-card/70 backdrop-blur-xl rounded-2xl
+         border border-white/[0.06] shadow-xl
          transition-all duration-300;
 }
 
@@ -149,9 +152,22 @@ textarea.input {
 /* Blockchain grid background */
 .blockchain-grid {
   background-image: 
-    linear-gradient(rgba(122, 162, 247, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122, 162, 247, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(122, 162, 247, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 162, 247, 0.025) 1px, transparent 1px);
   background-size: 60px 60px;
+}
+
+.hero-surface {
+  background:
+    radial-gradient(circle at 84% 16%, rgba(122, 162, 247, 0.2), transparent 30%),
+    radial-gradient(circle at 58% 110%, rgba(187, 154, 247, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(36, 40, 59, 0.92), rgba(25, 27, 39, 0.9));
+}
+
+.eyebrow {
+  @apply inline-flex items-center gap-2 rounded-full border border-blockchain-accent/20
+         bg-blockchain-accent/10 px-3 py-1 text-[11px] font-semibold uppercase
+         tracking-[0.18em] text-blockchain-accent;
 }
 
 /* Hash display */

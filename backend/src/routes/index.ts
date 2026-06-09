@@ -4,6 +4,7 @@ import uploadRoutes from "./upload.routes.js";
 import assetRoutes from "./asset.routes.js";
 import verifyRoutes from "./verify.routes.js";
 import statsRoutes from "./stats.routes.js";
+import walletRoutes from "./wallet.routes.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/assets", verifyRoutes);
 
 // 统计数据
 router.use("/stats", statsRoutes);
+router.use("/", walletRoutes);
 
 export default router;

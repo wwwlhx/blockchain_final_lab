@@ -5,10 +5,11 @@ import {
   Blocks, FileCheck, ArrowRightLeft, Shield, 
   ChevronRight, Loader2, RefreshCw, Hash, Database,
   Lock, Fingerprint, FileText, Activity, CheckCircle2,
-  Clock
+  Clock, Sparkles, Network, Zap, ArrowUpRight
 } from 'lucide-react'
-import { getAssets, getStats, getHealth, Asset, SystemStats } from '../lib/api'
+import { getAssets, getStats, getHealth, syncChainIndex, Asset, SystemStats } from '../lib/api'
 import { truncateHash } from '../lib/utils'
+import toast from 'react-hot-toast'
 
 function AnimatedCounter({ value, duration = 1 }: { value: number; duration?: number }) {
   const count = useMotionValue(0)
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const [chainInfo, setChainInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [syncing, setSyncing] = useState(false)
   
   const fetchAll = async () => {
     setLoading(true)
@@ -52,6 +54,19 @@ export default function Dashboard() {
   useEffect(() => {
     fetchAll()
   }, [])
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const res = await syncChainIndex()
+      toast.success(`已重建 ${res.data.data.assets} 条链上资产索引`)
+      await fetchAll()
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || '链上同步失败')
+    } finally {
+      setSyncing(false)
+    }
+  }
   
   const statCards = [
     { 
@@ -145,47 +160,93 @@ export default function Dashboard() {
   
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold gradient-text">仪表盘</h1>
-          <p className="text-gray-400 mt-1">数字资产确权系统概览</p>
-        </div>
-        <motion.button
-          className="btn-secondary flex items-center gap-2"
-          onClick={fetchAll}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          刷新
-        </motion.button>
-      </div>
-
-      {/* Chain Sync Status */}
-      {chainInfo && (
-        <motion.div
-          className="card p-4 flex items-center justify-between"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-        >
-          <div className="flex items-center gap-4">
-            <div className={`w-3 h-3 rounded-full ${chainInfo.connected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-            <div>
-              <p className="text-sm font-medium">链上 / 链下数据同步状态</p>
-              <p className="text-xs text-gray-500">{chainInfo.connected ? `已连接 ${chainInfo.network} 网络` : '未连接'}</p>
+      <motion.section
+        className="hero-surface relative overflow-hidden rounded-3xl border border-white/[0.08] p-6 shadow-2xl sm:p-8 lg:p-10"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full border border-blockchain-accent/10" />
+        <div className="pointer-events-none absolute -right-2 -top-4 h-44 w-44 rounded-full border border-purple-400/10" />
+        <div className="relative grid gap-8 lg:grid-cols-[1.45fr_0.85fr] lg:items-center">
+          <div>
+            <span className="eyebrow">
+              <Sparkles className="h-3.5 w-3.5" />
+              Three-layer trusted evidence
+            </span>
+            <h1 className="mt-5 max-w-3xl text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+              让每一份数字资产
+              <span className="gradient-text"> 可验证、可流转、可追溯</span>
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-gray-400 sm:text-base">
+              通过文件指纹、元数据声明和链上权属记录，构建完整的数字资产技术证据链。
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link to="/register" className="btn-primary inline-flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                开始确权演示
+              </Link>
+              <Link to="/architecture" className="btn-secondary inline-flex items-center gap-2">
+                <Network className="h-4 w-4" />
+                查看系统架构
+              </Link>
+              <motion.button
+                className="inline-flex items-center gap-2 px-3 text-sm text-gray-500 hover:text-white"
+                onClick={fetchAll}
+                whileTap={{ scale: 0.96 }}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                刷新数据
+              </motion.button>
+              <motion.button
+                className="inline-flex items-center gap-2 rounded-xl border border-green-500/20 bg-green-500/[0.07] px-4 py-2 text-sm text-green-400 hover:bg-green-500/[0.12] disabled:opacity-50"
+                onClick={handleSync}
+                disabled={syncing}
+                whileTap={{ scale: 0.96 }}
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                链上同步
+              </motion.button>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-400">
-            <span>合约: <code className="text-blockchain-accent">{chainInfo.contractAddress?.slice(0, 10)}...</code></span>
-            <span>余额: {chainInfo.balance}</span>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-black/20 p-5 backdrop-blur-md">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Network status</p>
+                <p className="mt-1 font-semibold">可信网络运行状态</p>
+              </div>
+              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
+                chainInfo?.connected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+              }`}>
+                <span className={`h-2 w-2 rounded-full ${chainInfo?.connected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+                {chainInfo?.connected ? '运行正常' : '连接异常'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: '网络', value: chainInfo?.network || '--' },
+                { label: 'Chain ID', value: chainInfo?.chainId ?? '--' },
+                { label: '区块高度', value: chainInfo?.blockNumber != null ? `#${chainInfo.blockNumber}` : '--' },
+                { label: '链下索引', value: `${stats?.totalAssets ?? 0} 条` },
+              ].map(item => (
+                <div key={item.label} className="rounded-xl border border-white/5 bg-white/[0.035] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-600">{item.label}</p>
+                  <p className="mt-1 font-mono text-sm text-gray-200">{item.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 rounded-xl border border-white/5 bg-white/[0.035] p-3">
+              <p className="text-[10px] uppercase tracking-wider text-gray-600">Contract address</p>
+              <p className="mt-1 truncate font-mono text-xs text-blockchain-accent">
+                {chainInfo?.contractAddress || '等待连接'}
+              </p>
+            </div>
           </div>
-        </motion.div>
-      )}
+        </div>
+      </motion.section>
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         {statCards.map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -194,7 +255,7 @@ export default function Dashboard() {
             transition={{ delay: index * 0.1 }}
           >
             <Link to={stat.link}>
-              <div className={`card p-4 hover:scale-[1.02] transition-transform cursor-pointer shadow-lg ${stat.bgGlow}`}>
+              <div className={`card group cursor-pointer p-4 shadow-lg transition-transform hover:-translate-y-1 ${stat.bgGlow}`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg flex-shrink-0`}>
                     <stat.icon className="w-5 h-5 text-white" />
@@ -205,12 +266,26 @@ export default function Dashboard() {
                       <AnimatedCounter value={stat.value} />
                     </p>
                   </div>
+                  <ArrowUpRight className="ml-auto h-4 w-4 text-gray-700 transition-colors group-hover:text-gray-400" />
                 </div>
               </div>
             </Link>
           </motion.div>
         ))}
       </div>
+
+      {stats && (
+        <motion.div
+          className="grid gap-5 lg:grid-cols-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <MiniBarChart title="资产类别分布" data={stats.categoryDistribution || []} emptyLabel="暂无类别数据" color="from-blue-500 to-cyan-400" />
+          <MiniBarChart title="交易类型分布" data={stats.transactionDistribution || []} emptyLabel="暂无交易数据" color="from-purple-500 to-pink-400" />
+          <MiniLineChart title="近 14 日登记趋势" data={stats.dailyRegistrations || []} />
+        </motion.div>
+      )}
       
       {/* Quick Actions */}
       <motion.div
@@ -443,13 +518,90 @@ export default function Dashboard() {
             {stats.recentLogs.slice(0, 8).map((log) => (
               <div key={log.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-blockchain-dark/30 text-sm">
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${log.level === 'error' ? 'bg-red-400' : log.level === 'warn' ? 'bg-yellow-400' : 'bg-green-400'}`} />
-                <span className="text-xs text-gray-500 font-mono w-16 flex-shrink-0">{log.module}</span>
+                <span className="text-xs text-gray-500 font-mono w-20 flex-shrink-0">{log.action}</span>
                 <span className="text-gray-300 flex-1 truncate">{log.message}</span>
                 <span className="text-[10px] text-gray-600 flex-shrink-0">{new Date(log.created_at).toLocaleString('zh-CN')}</span>
               </div>
             ))}
           </div>
         </motion.div>
+      )}
+    </div>
+  )
+}
+
+function MiniBarChart({
+  title,
+  data,
+  emptyLabel,
+  color,
+}: {
+  title: string
+  data: { name: string; value: number }[]
+  emptyLabel: string
+  color: string
+}) {
+  const max = Math.max(1, ...data.map(item => item.value))
+  return (
+    <div className="card p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-semibold">{title}</h3>
+        <span className="text-xs text-gray-600">{data.reduce((sum, item) => sum + item.value, 0)} total</span>
+      </div>
+      {data.length === 0 ? (
+        <p className="py-8 text-center text-sm text-gray-600">{emptyLabel}</p>
+      ) : (
+        <div className="space-y-3">
+          {data.slice(0, 5).map(item => (
+            <div key={item.name}>
+              <div className="mb-1 flex justify-between text-xs">
+                <span className="text-gray-400">{item.name}</span>
+                <span className="font-mono text-gray-500">{item.value}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
+                <motion.div
+                  className={`h-full rounded-full bg-gradient-to-r ${color}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(item.value / max) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MiniLineChart({
+  title,
+  data,
+}: {
+  title: string
+  data: { date: string; value: number }[]
+}) {
+  const max = Math.max(1, ...data.map(item => item.value))
+  return (
+    <div className="card p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-semibold">{title}</h3>
+        <span className="text-xs text-gray-600">{data.length} days</span>
+      </div>
+      {data.length === 0 ? (
+        <p className="py-8 text-center text-sm text-gray-600">暂无趋势数据</p>
+      ) : (
+        <div className="flex h-28 items-end gap-2">
+          {data.map(item => (
+            <div key={item.date} className="flex flex-1 flex-col items-center gap-2">
+              <motion.div
+                className="w-full rounded-t-lg bg-gradient-to-t from-green-500 to-cyan-400"
+                initial={{ height: 0 }}
+                animate={{ height: `${Math.max(12, (item.value / max) * 96)}px` }}
+              />
+              <span className="text-[9px] text-gray-600">{item.date.slice(5)}</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
